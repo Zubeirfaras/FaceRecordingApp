@@ -1,17 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Face Recording</title>
-    <link rel="stylesheet" href="style.css">  <!-- Link to the CSS file -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Face Recording App</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h2>Camera Access</h2>
+  <div class="container">
+    <h1>Face Recording App</h1>
+    <video id="video" width="640" height="480" autoplay></video>
+    <br>
     <button id="startBtn">Start Recording</button>
-    <video id="videoElement" width="640" height="480" autoplay></video>
-    <button id="stopBtn" style="display:none;">Stop Recording</button>
-
-    <script src="script.js"></script>  <!-- Link to the JS file -->
+    <button id="stopBtn" disabled>Stop Recording</button>
+    <a id="downloadLink" style="display:none;" download="recorded-video.webm">Download Video</a>
+  </div>
+  
+  <script src="script.js"></script>
 </body>
 </html>

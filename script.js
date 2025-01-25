@@ -1,45 +1,66 @@
+const videoElement = document.getElementById('video');
 const startBtn = document.getElementById('startBtn');
 const stopBtn = document.getElementById('stopBtn');
-const videoElement = document.getElementById('videoElement');
+const downloadLink = document.getElementById('downloadLink');
+
 let mediaRecorder;
 let recordedChunks = [];
 
-startBtn.addEventListener('click', async () => {
-    try {
-        // Request camera permission
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+navigator.mediaDevices.getUserMedia({ video: true })
+  .then(stream => {
+    videoElement.srcObject = stream;
 
-        // Display the video stream
-        videoElement.srcObject = stream;
+    startBtn.addEventListener('click', () => {
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = event => {
+        recordedChunks.push(event.data);
+      };
 
-        // Initialize the MediaRecorder for capturing the video
-        mediaRecorder = new MediaRecorder(stream);
-        mediaRecorder.ondataavailable = (event) => {
-            recordedChunks.push(event.data);
-        };
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const videoURL = URL.createObjectURL(blob);
+        
+        // Enable download link and set the video URL
+        downloadLink.href = videoURL;
+        downloadLink.style.display = 'inline-block';
+        stopBtn.disabled = true;
+        startBtn.disabled = false;
 
-        mediaRecorder.onstop = () => {
-            const videoBlob = new Blob(recordedChunks, { type: 'video/webm' });
-            const videoUrl = URL.createObjectURL(videoBlob);
-            const link = document.createElement('a');
-            link.href = videoUrl;
-            link.download = 'recorded_video.webm';
-            link.click();
-        };
+        // Upload the video to the server
+        uploadVideo(blob);
+      };
 
-        // Start recording
-        mediaRecorder.start();
+      mediaRecorder.start();
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+    });
 
-        // Toggle visibility of buttons
-        startBtn.style.display = 'none';
-        stopBtn.style.display = 'inline';
+    stopBtn.addEventListener('click', () => {
+      mediaRecorder.stop();
+      stream.getTracks().forEach(track => track.stop());  // Stop the camera
+    });
+  })
+  .catch(error => {
+    console.error('Error accessing webcam:', error);
+  });
 
-        stopBtn.addEventListener('click', () => {
-            mediaRecorder.stop();
-            videoElement.srcObject.getTracks().forEach(track => track.stop());
-        });
-    } catch (error) {
-        console.error('Error accessing camera:', error);
-        alert('Camera access denied or unavailable.');
-    }
-});
+// Function to upload the video to the server
+function uploadVideo(blob) {
+  const formData = new FormData();
+  formData.append('video', blob, 'recorded-video.webm');
+
+  // Send the video to the server using Fetch API
+  fetch('upload_video.php', {
+    method: 'POST',
+    body: formData
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log('Video uploaded successfully:', data);
+    alert('Video uploaded successfully!');
+  })
+  .catch(error => {
+    console.error('Error uploading video:', error);
+    alert('Failed to upload video');
+  });
+}
